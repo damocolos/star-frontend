@@ -1,0 +1,55 @@
+import api from './api'
+
+export interface User {
+  id: string
+  name: string
+  email: string
+  role?: string
+  created_at?: string
+  updated_at?: string
+}
+
+export interface CreateUserDto {
+  name: string
+  email: string
+  password: string
+  role?: string
+}
+
+export interface UpdateUserDto {
+  name?: string
+  email?: string
+  password?: string
+  role?: string
+}
+
+interface ApiResponse<T> {
+  success: boolean
+  data: T
+}
+
+export const usersService = {
+  async getAll(): Promise<User[]> {
+    const response = await api.get<ApiResponse<User[]>>('/users')
+    return response.data.data
+  },
+
+  async getById(id: string): Promise<User> {
+    const response = await api.get<ApiResponse<User>>(`/users/${id}`)
+    return response.data.data
+  },
+
+  async create(userData: CreateUserDto): Promise<User> {
+    const response = await api.post<ApiResponse<User>>('/users', userData)
+    return response.data.data
+  },
+
+  async update(id: string, userData: UpdateUserDto): Promise<User> {
+    const response = await api.put<ApiResponse<User>>(`/users/${id}`, userData)
+    return response.data.data
+  },
+
+  async delete(id: string): Promise<void> {
+    await api.delete(`/users/${id}`)
+  },
+}
