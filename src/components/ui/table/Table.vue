@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/multi-word-component-names -->
 <script setup lang="ts">
 import { type HTMLAttributes, computed } from 'vue'
 import { cn } from '@/utils'

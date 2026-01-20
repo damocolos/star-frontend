@@ -1,5 +1,11 @@
+<!-- eslint-disable vue/multi-word-component-names -->
 <script setup lang="ts">
-import { DialogRoot, type DialogRootEmits, type DialogRootProps, useForwardPropsEmits } from 'radix-vue'
+import {
+  DialogRoot,
+  type DialogRootEmits,
+  type DialogRootProps,
+  useForwardPropsEmits,
+} from 'radix-vue'
 import { type HTMLAttributes, computed } from 'vue'
 
 interface DialogProps extends DialogRootProps {

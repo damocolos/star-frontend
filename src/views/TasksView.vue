@@ -1,11 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import {
-  tasksService,
-  type Task,
-  type CreateTaskDto,
-  type UpdateTaskDto,
-} from '@/services/tasks.service'
+import { type CreateTaskDto } from '@/services/tasks.service'
+import { useTasksStore } from '@/stores/tasks'
 import MainLayout from '@/components/layouts/MainLayout.vue'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -25,13 +21,21 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { RangeCalendar } from '@/components/ui/calendar'
 import { formatDateTime } from '@/utils'
 import { CalendarIcon, Pencil, Trash2, Plus } from 'lucide-vue-next'
-import { DateFormatter, type DateValue, getLocalTimeZone, today } from '@internationalized/date'
+import { DateFormatter, type DateValue, getLocalTimeZone } from '@internationalized/date'
 
-const tasks = ref<Task[]>([])
-const isLoading = ref(false)
+const tasksStore = useTasksStore()
+const tasks = computed(() => tasksStore.tasks)
+const isLoading = computed(() => tasksStore.isLoading)
 const isDialogOpen = ref(false)
 const isEditing = ref(false)
-const currentTask = ref<Task | null>(null)
+const currentTask = ref<{
+  id: string
+  title: string
+  description?: string
+  status: string
+  priority?: string
+  due_date?: string
+} | null>(null)
 const selectedDate = ref<DateValue | undefined>()
 
 const formData = ref<CreateTaskDto>({
@@ -50,17 +54,6 @@ const formattedDate = computed(() => {
   return df.format(selectedDate.value.toDate(getLocalTimeZone()))
 })
 
-const loadTasks = async () => {
-  isLoading.value = true
-  try {
-    tasks.value = await tasksService.getAll()
-  } catch (error) {
-    console.error('Failed to load tasks:', error)
-  } finally {
-    isLoading.value = false
-  }
-}
-
 const openCreateDialog = () => {
   isEditing.value = false
   currentTask.value = null
@@ -74,7 +67,14 @@ const openCreateDialog = () => {
   isDialogOpen.value = true
 }
 
-const openEditDialog = (task: Task) => {
+const openEditDialog = (task: {
+  id: string
+  title: string
+  description?: string
+  status: string
+  priority?: string
+  due_date?: string
+}) => {
   isEditing.value = true
   currentTask.value = task
 
@@ -86,9 +86,9 @@ const openEditDialog = (task: Task) => {
         year: date.getFullYear(),
         month: date.getMonth() + 1,
         day: date.getDate(),
-        toDate: (tz: any) => date,
+        toDate: () => date,
       } as DateValue
-    } catch (e) {
+    } catch {
       selectedDate.value = undefined
     }
   } else {
@@ -98,8 +98,8 @@ const openEditDialog = (task: Task) => {
   formData.value = {
     title: task.title,
     description: task.description || '',
-    status: task.status,
-    priority: task.priority || 'medium',
+    status: task.status as 'pending' | 'in-progress' | 'completed',
+    priority: (task.priority || 'medium') as 'low' | 'medium' | 'high',
   }
   isDialogOpen.value = true
 }
@@ -114,12 +114,11 @@ const handleSubmit = async () => {
     }
 
     if (isEditing.value && currentTask.value) {
-      await tasksService.update(currentTask.value.id, taskData)
+      await tasksStore.updateTask(currentTask.value.id, taskData)
     } else {
-      await tasksService.create(taskData)
+      await tasksStore.createTask(taskData)
     }
     isDialogOpen.value = false
-    await loadTasks()
   } catch (error) {
     console.error('Failed to save task:', error)
   }
@@ -128,8 +127,7 @@ const handleSubmit = async () => {
 const handleDelete = async (id: string) => {
   if (confirm('Are you sure you want to delete this task?')) {
     try {
-      await tasksService.delete(id)
-      await loadTasks()
+      await tasksStore.deleteTask(id)
     } catch (error) {
       console.error('Failed to delete task:', error)
     }
@@ -159,7 +157,7 @@ const getPriorityVariant = (priority: string) => {
 }
 
 onMounted(() => {
-  loadTasks()
+  tasksStore.fetchTasks()
 })
 </script>
 

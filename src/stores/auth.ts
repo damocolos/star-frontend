@@ -28,16 +28,10 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function logout() {
-    try {
-      await authService.logout()
-    } catch (error) {
-      console.error('Logout error:', error)
-    } finally {
-      token.value = null
-      user.value = null
-      localStorage.removeItem('auth_token')
-      localStorage.removeItem('auth_user')
-    }
+    token.value = null
+    user.value = null
+    localStorage.removeItem('auth_token')
+    localStorage.removeItem('auth_user')
   }
 
   function checkAuth() {

@@ -1,11 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import {
-  usersService,
-  type User,
-  type CreateUserDto,
-  type UpdateUserDto,
-} from '@/services/users.service'
+import { ref, onMounted, computed } from 'vue'
+import { type CreateUserDto, type UpdateUserDto } from '@/services/users.service'
+import { useUsersStore } from '@/stores/users'
 import MainLayout from '@/components/layouts/MainLayout.vue'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -31,11 +27,12 @@ import { Badge } from '@/components/ui/badge'
 import { formatDateTime } from '@/utils'
 import { Pencil, Trash2, Plus } from 'lucide-vue-next'
 
-const users = ref<User[]>([])
-const isLoading = ref(false)
+const usersStore = useUsersStore()
+const users = computed(() => usersStore.users)
+const isLoading = computed(() => usersStore.isLoading)
 const isDialogOpen = ref(false)
 const isEditing = ref(false)
-const currentUser = ref<User | null>(null)
+const currentUser = ref<{ id: string; name: string; email: string; role?: string } | null>(null)
 
 const formData = ref<CreateUserDto>({
   name: '',
@@ -43,17 +40,6 @@ const formData = ref<CreateUserDto>({
   password: '',
   role: '',
 })
-
-const loadUsers = async () => {
-  isLoading.value = true
-  try {
-    users.value = await usersService.getAll()
-  } catch (error) {
-    console.error('Failed to load users:', error)
-  } finally {
-    isLoading.value = false
-  }
-}
 
 const openCreateDialog = () => {
   isEditing.value = false
@@ -67,7 +53,7 @@ const openCreateDialog = () => {
   isDialogOpen.value = true
 }
 
-const openEditDialog = (user: User) => {
+const openEditDialog = (user: { id: string; name: string; email: string; role?: string }) => {
   isEditing.value = true
   currentUser.value = user
   formData.value = {
@@ -90,12 +76,11 @@ const handleSubmit = async () => {
       if (formData.value.password) {
         updateData.password = formData.value.password
       }
-      await usersService.update(currentUser.value.id, updateData)
+      await usersStore.updateUser(currentUser.value.id, updateData)
     } else {
-      await usersService.create(formData.value)
+      await usersStore.createUser(formData.value)
     }
     isDialogOpen.value = false
-    await loadUsers()
   } catch (error) {
     console.error('Failed to save user:', error)
   }
@@ -104,8 +89,7 @@ const handleSubmit = async () => {
 const handleDelete = async (id: string) => {
   if (confirm('Are you sure you want to delete this user?')) {
     try {
-      await usersService.delete(id)
-      await loadUsers()
+      await usersStore.deleteUser(id)
     } catch (error) {
       console.error('Failed to delete user:', error)
     }
@@ -113,7 +97,7 @@ const handleDelete = async (id: string) => {
 }
 
 onMounted(() => {
-  loadUsers()
+  usersStore.fetchUsers()
 })
 </script>
 
