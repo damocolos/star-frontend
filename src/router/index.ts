@@ -44,7 +44,7 @@ router.beforeEach((to, from, next) => {
     // Redirect to login if not authenticated
     next({ name: 'login' })
   } else if (to.name === 'login' && authStore.isAuthenticated) {
-    // Redirect to dashboard if already logged in
+    // Redirect to home (tasks) if already logged in
     next({ name: 'dashboard' })
   } else {
     next()
@@ -52,4 +52,3 @@ router.beforeEach((to, from, next) => {
 })
 
 export default router
-

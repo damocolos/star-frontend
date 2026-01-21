@@ -52,4 +52,8 @@ export const usersService = {
   async delete(id: string): Promise<void> {
     await api.delete(`/users/${id}`)
   },
+
+  async changePassword(id: string, newPassword: string): Promise<void> {
+    await api.post(`/users/${id}/change-password`, { new_password: newPassword })
+  },
 }

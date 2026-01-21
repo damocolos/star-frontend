@@ -13,7 +13,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
@@ -98,7 +104,7 @@ const openEditDialog = (task: {
   formData.value = {
     title: task.title,
     description: task.description || '',
-    status: task.status as 'pending' | 'in-progress' | 'completed',
+    status: task.status as 'pending' | 'in_progress' | 'completed' | 'archived',
     priority: (task.priority || 'medium') as 'low' | 'medium' | 'high',
   }
   isDialogOpen.value = true
@@ -176,6 +182,13 @@ onMounted(() => {
             </DialogTrigger>
             <DialogContent>
               <DialogTitle>{{ isEditing ? 'Edit Task' : 'Create Task' }}</DialogTitle>
+              <DialogDescription class="sr-only">
+                {{
+                  isEditing
+                    ? 'Edit task information including title, description, status, priority, and due date'
+                    : 'Create a new task with title, description, status, priority, and due date'
+                }}
+              </DialogDescription>
               <form @submit.prevent="handleSubmit" class="space-y-4">
                 <div class="space-y-2">
                   <Label for="title">Title</Label>

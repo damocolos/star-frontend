@@ -77,7 +77,23 @@ export const useUsersStore = defineStore('users', () => {
     }
   }
 
+  const changePassword = async (id: string, newPassword: string) => {
+    try {
+      await usersService.changePassword(id, newPassword)
+    } catch (error) {
+      console.error('Failed to change password:', error)
+      throw error
+    }
+  }
+
   const refresh = () => fetchUsers(true)
+
+  const resetStore = () => {
+    users.value = []
+    isLoading.value = false
+    isInitialized.value = false
+    lastFetched.value = 0
+  }
 
   return {
     users: getUsers,
@@ -90,6 +106,8 @@ export const useUsersStore = defineStore('users', () => {
     createUser,
     updateUser,
     deleteUser,
+    changePassword,
     refresh,
+    resetStore,
   }
 })

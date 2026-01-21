@@ -1,11 +1,14 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { authService, type LoginCredentials } from '@/services/auth.service'
+import { useTasksStore } from './tasks'
+import { useUsersStore } from './users'
 
 interface User {
   id: number
   email: string
   name: string
+  role?: string
 }
 
 export const useAuthStore = defineStore('auth', () => {
@@ -28,6 +31,14 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function logout() {
+    // Reset all stores
+    const tasksStore = useTasksStore()
+    const usersStore = useUsersStore()
+
+    tasksStore.resetStore()
+    usersStore.resetStore()
+
+    // Clear auth data
     token.value = null
     user.value = null
     localStorage.removeItem('auth_token')

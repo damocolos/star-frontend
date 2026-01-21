@@ -45,7 +45,7 @@ export const useTasksStore = defineStore('tasks', () => {
   const createTask = async (data: CreateTaskDto) => {
     try {
       const newTask = await tasksService.create(data)
-      tasks.value.push(newTask)
+      tasks.value.unshift(newTask)
       return newTask
     } catch (error) {
       console.error('Failed to create task:', error)
@@ -77,7 +77,31 @@ export const useTasksStore = defineStore('tasks', () => {
     }
   }
 
+  const changeStatus = async (
+    id: string,
+    status: 'pending' | 'in_progress' | 'completed' | 'archived',
+  ) => {
+    try {
+      const updatedTask = await tasksService.changeStatus(id, status)
+      const index = tasks.value.findIndex((t) => t.id === id)
+      if (index !== -1) {
+        tasks.value[index] = updatedTask
+      }
+      return updatedTask
+    } catch (error) {
+      console.error('Failed to change task status:', error)
+      throw error
+    }
+  }
+
   const refresh = () => fetchTasks(true)
+
+  const resetStore = () => {
+    tasks.value = []
+    isLoading.value = false
+    isInitialized.value = false
+    lastFetched.value = 0
+  }
 
   return {
     tasks: getTasks,
@@ -90,6 +114,8 @@ export const useTasksStore = defineStore('tasks', () => {
     createTask,
     updateTask,
     deleteTask,
+    changeStatus,
     refresh,
+    resetStore,
   }
 })
