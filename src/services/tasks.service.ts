@@ -35,6 +35,19 @@ export interface UpdateTaskDto {
   due_date?: string
 }
 
+export interface PaginationMetadata {
+  page: number
+  page_size: number
+  total_items: number
+  total_pages: number
+}
+
+export interface PaginatedResponse<T> {
+  success: boolean
+  data: T[]
+  metadata: PaginationMetadata
+}
+
 interface ApiResponse<T> {
   success: boolean
   data: T
@@ -46,15 +59,31 @@ interface TaskWithMongoId extends Omit<Task, 'id'> {
 }
 
 export const tasksService = {
-  async getAll(): Promise<Task[]> {
-    const response = await api.get<ApiResponse<Task[]>>('/tasks')
-    const data = response.data.data
-    const tasks = Array.isArray(data) ? data : []
+  async getAll(params?: {
+    search?: string
+    page?: number
+    page_size?: number
+  }): Promise<PaginatedResponse<Task>> {
+    const searchParams = new URLSearchParams()
+    if (params?.search) searchParams.append('search', params.search)
+    if (params?.page) searchParams.append('page', params.page.toString())
+    if (params?.page_size) searchParams.append('page_size', params.page_size.toString())
+
+    const url = `/tasks${searchParams.toString() ? '?' + searchParams.toString() : ''}`
+    const response = await api.get<PaginatedResponse<Task>>(url)
+    const result = response.data
+
     // Map _id to id if needed
-    return tasks.map((task: TaskWithMongoId) => ({
+    const tasks = result.data.map((task: TaskWithMongoId) => ({
       ...task,
       id: task.id || task._id || '',
     }))
+
+    return {
+      success: result.success,
+      data: tasks,
+      metadata: result.metadata,
+    }
   },
 
   async getById(id: string): Promise<Task> {
@@ -86,17 +115,5 @@ export const tasksService = {
 
   async delete(id: string): Promise<void> {
     await api.delete(`/tasks/${id}`)
-  },
-
-  async changeStatus(
-    id: string,
-    status: 'pending' | 'in_progress' | 'completed' | 'archived',
-  ): Promise<Task> {
-    const response = await api.patch<ApiResponse<Task>>(`/tasks/${id}/status-change`, { status })
-    const task = response.data.data as TaskWithMongoId
-    return {
-      ...task,
-      id: task.id || task._id || '',
-    }
   },
 }

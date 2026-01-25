@@ -5,16 +5,24 @@ import {
   type Task,
   type CreateTaskDto,
   type UpdateTaskDto,
+  type PaginationMetadata,
 } from '@/services/tasks.service'
 
 export const useTasksStore = defineStore('tasks', () => {
   const tasks = ref<Task[]>([])
+  const metadata = ref<PaginationMetadata>({
+    page: 1,
+    page_size: 10,
+    total_items: 0,
+    total_pages: 0,
+  })
   const isLoading = ref(false)
   const isInitialized = ref(false)
   const lastFetched = ref(0)
   const ttl = ref(10_000) // 10 seconds
 
   const getTasks = computed(() => tasks.value)
+  const getMetadata = computed(() => metadata.value)
   const isStale = computed(() => {
     const now = Date.now()
     const timeSinceLastFetch = now - lastFetched.value
@@ -22,14 +30,19 @@ export const useTasksStore = defineStore('tasks', () => {
     return stale
   })
 
-  const fetchTasks = async (force = false) => {
+  const fetchTasks = async (
+    params?: { search?: string; page?: number; page_size?: number },
+    force = false,
+  ) => {
     const currentIsStale = isStale.value
-    const shouldFetch = force || !isInitialized.value || currentIsStale
+    const shouldFetch = force || !isInitialized.value || currentIsStale || params
 
     if (shouldFetch) {
       isLoading.value = true
       try {
-        tasks.value = await tasksService.getAll()
+        const result = await tasksService.getAll(params)
+        tasks.value = result.data
+        metadata.value = result.metadata
         isInitialized.value = true
         lastFetched.value = Date.now()
       } catch (error) {
@@ -77,27 +90,16 @@ export const useTasksStore = defineStore('tasks', () => {
     }
   }
 
-  const changeStatus = async (
-    id: string,
-    status: 'pending' | 'in_progress' | 'completed' | 'archived',
-  ) => {
-    try {
-      const updatedTask = await tasksService.changeStatus(id, status)
-      const index = tasks.value.findIndex((t) => t.id === id)
-      if (index !== -1) {
-        tasks.value[index] = updatedTask
-      }
-      return updatedTask
-    } catch (error) {
-      console.error('Failed to change task status:', error)
-      throw error
-    }
-  }
-
-  const refresh = () => fetchTasks(true)
+  const refresh = () => fetchTasks(undefined, true)
 
   const resetStore = () => {
     tasks.value = []
+    metadata.value = {
+      page: 1,
+      page_size: 10,
+      total_items: 0,
+      total_pages: 0,
+    }
     isLoading.value = false
     isInitialized.value = false
     lastFetched.value = 0
@@ -105,6 +107,7 @@ export const useTasksStore = defineStore('tasks', () => {
 
   return {
     tasks: getTasks,
+    metadata: getMetadata,
     isLoading,
     isInitialized,
     isStale,
@@ -114,7 +117,6 @@ export const useTasksStore = defineStore('tasks', () => {
     createTask,
     updateTask,
     deleteTask,
-    changeStatus,
     refresh,
     resetStore,
   }

@@ -2,6 +2,20 @@
 
 This template should help get you started developing with Vue 3 in Vite.
 
+## Demo
+
+**Live Demo:** [https://star-frontend-chi.vercel.app](https://star-frontend-chi.vercel.app)
+
+### Test Credentials
+
+**Admin Account:**
+- Email: `andamantium@test.test`
+- Password: `5YI0OaYGpt03rDp33`
+
+**Basic User Account:**
+- Email: `basicuser@test.test`
+- Password: `856lt17HvnkK`
+
 ## Recommended IDE Setup
 
 [VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).

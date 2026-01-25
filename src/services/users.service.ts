@@ -23,15 +23,38 @@ export interface UpdateUserDto {
   role?: string
 }
 
+export interface PaginationMetadata {
+  page: number
+  page_size: number
+  total_items: number
+  total_pages: number
+}
+
+export interface PaginatedResponse<T> {
+  success: boolean
+  data: T[]
+  metadata: PaginationMetadata
+}
+
 interface ApiResponse<T> {
   success: boolean
   data: T
 }
 
 export const usersService = {
-  async getAll(): Promise<User[]> {
-    const response = await api.get<ApiResponse<User[]>>('/users')
-    return response.data.data
+  async getAll(params?: {
+    search?: string
+    page?: number
+    page_size?: number
+  }): Promise<PaginatedResponse<User>> {
+    const searchParams = new URLSearchParams()
+    if (params?.search) searchParams.append('search', params.search)
+    if (params?.page) searchParams.append('page', params.page.toString())
+    if (params?.page_size) searchParams.append('page_size', params.page_size.toString())
+
+    const url = `/users${searchParams.toString() ? '?' + searchParams.toString() : ''}`
+    const response = await api.get<PaginatedResponse<User>>(url)
+    return response.data
   },
 
   async getById(id: string): Promise<User> {

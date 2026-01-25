@@ -1,1 +1,4 @@
 @import './base.css';
+
+/* Sonner toast styles */
+@import 'vue-sonner/style.css';

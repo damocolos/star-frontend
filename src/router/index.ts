@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import LoginView from '@/views/LoginView.vue'
-import DashboardView from '@/views/DashboardView.vue'
 import UsersView from '@/views/UsersView.vue'
 import TasksView from '@/views/TasksView.vue'
 
@@ -16,20 +15,14 @@ const router = createRouter({
     },
     {
       path: '/',
-      name: 'dashboard',
-      component: DashboardView,
+      name: 'tasks',
+      component: TasksView,
       meta: { requiresAuth: true },
     },
     {
       path: '/users',
       name: 'users',
       component: UsersView,
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/tasks',
-      name: 'tasks',
-      component: TasksView,
       meta: { requiresAuth: true },
     },
   ],
@@ -45,7 +38,7 @@ router.beforeEach((to, from, next) => {
     next({ name: 'login' })
   } else if (to.name === 'login' && authStore.isAuthenticated) {
     // Redirect to home (tasks) if already logged in
-    next({ name: 'dashboard' })
+    next({ name: 'tasks' })
   } else {
     next()
   }

@@ -5,16 +5,24 @@ import {
   type User,
   type CreateUserDto,
   type UpdateUserDto,
+  type PaginationMetadata,
 } from '@/services/users.service'
 
 export const useUsersStore = defineStore('users', () => {
   const users = ref<User[]>([])
+  const metadata = ref<PaginationMetadata>({
+    page: 1,
+    page_size: 10,
+    total_items: 0,
+    total_pages: 0,
+  })
   const isLoading = ref(false)
   const isInitialized = ref(false)
   const lastFetched = ref(0)
   const ttl = ref(10_000) // 10 seconds
 
   const getUsers = computed(() => users.value)
+  const getMetadata = computed(() => metadata.value)
   const isStale = computed(() => {
     const now = Date.now()
     const timeSinceLastFetch = now - lastFetched.value
@@ -22,14 +30,19 @@ export const useUsersStore = defineStore('users', () => {
     return stale
   })
 
-  const fetchUsers = async (force = false) => {
+  const fetchUsers = async (
+    params?: { search?: string; page?: number; page_size?: number },
+    force = false,
+  ) => {
     const currentIsStale = isStale.value
-    const shouldFetch = force || !isInitialized.value || currentIsStale
+    const shouldFetch = force || !isInitialized.value || currentIsStale || params
 
     if (shouldFetch) {
       isLoading.value = true
       try {
-        users.value = await usersService.getAll()
+        const result = await usersService.getAll(params)
+        users.value = result.data
+        metadata.value = result.metadata
         isInitialized.value = true
         lastFetched.value = Date.now()
       } catch (error) {
@@ -86,10 +99,16 @@ export const useUsersStore = defineStore('users', () => {
     }
   }
 
-  const refresh = () => fetchUsers(true)
+  const refresh = () => fetchUsers(undefined, true)
 
   const resetStore = () => {
     users.value = []
+    metadata.value = {
+      page: 1,
+      page_size: 10,
+      total_items: 0,
+      total_pages: 0,
+    }
     isLoading.value = false
     isInitialized.value = false
     lastFetched.value = 0
@@ -97,6 +116,7 @@ export const useUsersStore = defineStore('users', () => {
 
   return {
     users: getUsers,
+    metadata: getMetadata,
     isLoading,
     isInitialized,
     isStale,
